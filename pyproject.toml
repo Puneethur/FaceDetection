@@ -17,10 +17,16 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+build = [
+    "pyinstaller>=6.0",
+]
 
 [project.scripts]
 face-detect = "face_detection.cli:main"
 face-detect-ui = "face_detection.gui:launch"
+
+[tool.setuptools]
+packages = ["face_detection"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -40,15 +40,17 @@ FaceDetection/
 ## Setup
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e .
+setup_env.bat
 ```
 
-If you want the test tooling too:
+This creates `.venv` and installs the project plus test/build tooling.
+
+If you prefer the manual steps:
 
 ```bash
-pip install -e .[dev]
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e .[dev,build]
 ```
 
 ## Usage
@@ -80,6 +82,10 @@ The UI lets you:
 - Train the recognition model from saved faces
 - Switch between detection mode and live recognition mode
 - See a list of already registered people and their sample counts
+
+When running from source, saved faces and trained models are written under `data/`.
+When running the packaged Windows `.exe`, they are stored under
+`%LOCALAPPDATA%\FaceDetection\`.
 
 ### 2. Run face detection from your webcam
 
@@ -146,6 +152,23 @@ python -m face_detection --image path/to/photo.jpg --scale-factor 1.05 --min-nei
 ```bash
 pytest
 ```
+
+## Build A Windows EXE
+
+```bash
+setup_env.bat
+build_exe.bat
+```
+
+This produces `dist\FaceDetectionStudio.exe`.
+
+Notes for customer delivery:
+
+- The `.exe` is a Windows desktop build of the GUI app.
+- The customer's machine still needs a webcam and the Microsoft Visual C++ runtime that
+  modern Python/OpenCV wheels normally rely on.
+- Face samples and trained models are stored per-user in `%LOCALAPPDATA%\FaceDetection\`,
+  so the app can run without write access to its install folder.
 
 ## Notes
 

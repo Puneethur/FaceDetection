@@ -6,6 +6,7 @@ from pathlib import Path
 import cv2
 
 from .detector import DetectionConfig, FaceDetector
+from .paths import default_dataset_dir, default_model_dir
 from .recognizer import FaceRecognitionStore
 
 
@@ -90,13 +91,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=Path("data/faces"),
+        default=default_dataset_dir(),
         help="Directory where named face samples are stored",
     )
     parser.add_argument(
         "--model-dir",
         type=Path,
-        default=Path("data/models"),
+        default=default_model_dir(),
         help="Directory where the trained recognition model is stored",
     )
     parser.add_argument(

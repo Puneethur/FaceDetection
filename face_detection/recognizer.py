@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 
 from .detector import FaceBox, FaceDetector
+from .paths import default_dataset_dir, default_model_dir
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp"}
 
@@ -61,12 +62,12 @@ def create_lbph_recognizer():
 class FaceRecognitionStore:
     def __init__(
         self,
-        dataset_dir: str | Path = "data/faces",
-        model_dir: str | Path = "data/models",
+        dataset_dir: str | Path | None = None,
+        model_dir: str | Path | None = None,
         face_size: tuple[int, int] = (200, 200),
     ) -> None:
-        self.dataset_dir = Path(dataset_dir)
-        self.model_dir = Path(model_dir)
+        self.dataset_dir = Path(dataset_dir) if dataset_dir else default_dataset_dir()
+        self.model_dir = Path(model_dir) if model_dir else default_model_dir()
         self.face_size = face_size
         self.model_path = self.model_dir / "lbph_face_recognizer.yml"
         self.labels_path = self.model_dir / "labels.json"
