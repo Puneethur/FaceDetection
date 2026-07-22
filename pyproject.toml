@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "face-detection"
 version = "0.1.0"
-description = "Simple OpenCV-based face detection for images and webcams."
+description = "Simple OpenCV-based face detection and recognition for images and webcams."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "opencv-python>=4.10,<5",
+    "opencv-contrib-python>=4.10,<5",
 ]
 
 [project.optional-dependencies]

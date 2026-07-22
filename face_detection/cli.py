@@ -6,6 +6,7 @@ from pathlib import Path
 import cv2
 
 from .detector import DetectionConfig, FaceDetector
+from .recognizer import FaceRecognitionStore
 
 
 def parse_min_size(value: str) -> tuple[int, int]:
@@ -27,7 +28,7 @@ def parse_min_size(value: str) -> tuple[int, int]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Detect faces in an image or webcam stream using OpenCV."
+        description="Detect and recognize faces in images or webcam streams using OpenCV."
     )
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("--image", type=Path, help="Path to an input image")
@@ -35,6 +36,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--webcam",
         action="store_true",
         help="Use the default webcam for live face detection",
+    )
+    input_group.add_argument(
+        "--register-person",
+        metavar="NAME",
+        help="Capture webcam samples for a named person and save them locally",
+    )
+    input_group.add_argument(
+        "--recognize-webcam",
+        action="store_true",
+        help="Recognize saved people from the webcam feed",
+    )
+    input_group.add_argument(
+        "--train-model",
+        action="store_true",
+        help="Train or retrain the recognition model from saved face samples",
     )
 
     parser.add_argument(
@@ -71,6 +87,30 @@ def build_parser() -> argparse.ArgumentParser:
         default=(30, 30),
         help="Minimum face size in WIDTHxHEIGHT format, for example 60x60",
     )
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("data/faces"),
+        help="Directory where named face samples are stored",
+    )
+    parser.add_argument(
+        "--model-dir",
+        type=Path,
+        default=Path("data/models"),
+        help="Directory where the trained recognition model is stored",
+    )
+    parser.add_argument(
+        "--sample-count",
+        type=int,
+        default=20,
+        help="How many face samples to capture when using --register-person",
+    )
+    parser.add_argument(
+        "--confidence-threshold",
+        type=float,
+        default=70.0,
+        help="Maximum LBPH confidence value to accept as a known person; lower is stricter",
+    )
     return parser
 
 
@@ -81,6 +121,10 @@ def create_detector(args: argparse.Namespace) -> FaceDetector:
         min_size=args.min_size,
     )
     return FaceDetector(cascade_path=args.cascade_path, config=config)
+
+
+def create_recognition_store(args: argparse.Namespace) -> FaceRecognitionStore:
+    return FaceRecognitionStore(dataset_dir=args.data_dir, model_dir=args.model_dir)
 
 
 def run_image_mode(args: argparse.Namespace) -> int:
@@ -129,16 +173,94 @@ def run_webcam_mode(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_register_mode(args: argparse.Namespace) -> int:
+    detector = create_detector(args)
+    store = create_recognition_store(args)
+
+    saved_count = store.capture_person_samples(
+        detector=detector,
+        person_name=args.register_person,
+        camera_index=args.camera_index,
+        sample_count=args.sample_count,
+    )
+    summary = store.train_model()
+
+    print(
+        f"Saved {saved_count} sample(s) for {args.register_person}. "
+        f"Model trained for {summary.person_count} person(s) with "
+        f"{summary.sample_count} total sample(s)."
+    )
+    print(f"Names are stored in {store.labels_path}")
+    return 0
+
+
+def run_train_mode(args: argparse.Namespace) -> int:
+    store = create_recognition_store(args)
+    summary = store.train_model()
+    print(
+        f"Training complete: {summary.person_count} person(s), "
+        f"{summary.sample_count} sample(s)."
+    )
+    print(f"Model saved to {store.model_path}")
+    print(f"Labels saved to {store.labels_path}")
+    return 0
+
+
+def run_recognition_webcam_mode(args: argparse.Namespace) -> int:
+    detector = create_detector(args)
+    store = create_recognition_store(args)
+    model = store.load_model()
+    capture = cv2.VideoCapture(args.camera_index)
+
+    if not capture.isOpened():
+        raise RuntimeError(
+            f"Could not open webcam at camera index {args.camera_index}"
+        )
+
+    print("Recognition webcam started. Press 'q' to quit.")
+    try:
+        while True:
+            ok, frame = capture.read()
+            if not ok:
+                raise RuntimeError("Failed to read a frame from the webcam")
+
+            faces = detector.detect(frame)
+            recognitions = store.recognize_faces(
+                image=frame,
+                faces=faces,
+                model=model,
+                confidence_threshold=args.confidence_threshold,
+            )
+            annotated = store.annotate_recognitions(frame, recognitions)
+            cv2.imshow("Face Recognition", annotated)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+    finally:
+        capture.release()
+        cv2.destroyAllWindows()
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.image and args.webcam:
-        parser.error("Choose either --image or --webcam, not both.")
+    if args.sample_count <= 0:
+        parser.error("--sample-count must be greater than zero.")
+    if args.confidence_threshold <= 0:
+        parser.error("--confidence-threshold must be greater than zero.")
 
     try:
         if args.image:
             return run_image_mode(args)
+        if args.register_person:
+            return run_register_mode(args)
+        if args.recognize_webcam:
+            return run_recognition_webcam_mode(args)
+        if args.train_model:
+            return run_train_mode(args)
         return run_webcam_mode(args)
     except Exception as error:
         print(f"Error: {error}")
