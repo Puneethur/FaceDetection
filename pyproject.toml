@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "opencv-contrib-python>=4.10,<5",
+    "Pillow>=10.0",
 ]
 
 [project.optional-dependencies]
@@ -19,6 +20,7 @@ dev = [
 
 [project.scripts]
 face-detect = "face_detection.cli:main"
+face-detect-ui = "face_detection.gui:launch"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

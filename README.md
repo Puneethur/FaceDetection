@@ -6,6 +6,7 @@ A simple Python face detection and recognition project built with OpenCV. It sup
 - Running live face detection from a webcam
 - Registering a person by name from a webcam
 - Recognizing saved people and displaying their names
+- Launching a desktop UI for camera preview, training, and recognition
 - Saving annotated output images
 
 ## Tech Stack
@@ -23,11 +24,14 @@ FaceDetection/
 |   |-- __main__.py
 |   |-- cli.py
 |   |-- detector.py
+|   |-- gui.py
 |   `-- recognizer.py
 |-- tests/
 |   |-- test_cli.py
+|   |-- test_gui.py
 |   `-- test_recognizer.py
 |-- .gitignore
+|-- launch_ui.bat
 |-- pyproject.toml
 |-- README.md
 `-- requirements.txt
@@ -57,6 +61,26 @@ python -m face_detection --image path/to/photo.jpg --output output/result.jpg
 
 The command prints how many faces were found and saves an annotated image when `--output` is provided.
 
+### Launch the desktop UI
+
+```bash
+python -m face_detection.gui
+```
+
+Or on Windows, just run:
+
+```bash
+launch_ui.bat
+```
+
+The UI lets you:
+
+- Open and stop the webcam
+- Enter a person's name and capture training samples
+- Train the recognition model from saved faces
+- Switch between detection mode and live recognition mode
+- See a list of already registered people and their sample counts
+
 ### 2. Run face detection from your webcam
 
 ```bash
@@ -83,6 +107,17 @@ python -m face_detection --recognize-webcam
 ```
 
 When a known person appears in front of the camera, their name is drawn above the detected face.
+
+## UI Workflow
+
+1. Open the camera in the desktop app.
+2. Type a person name such as `Puneeth`.
+3. Leave `Sample Count` at `20` to start.
+4. Click `Capture & Train`.
+5. Look at the camera and slightly move left and right while samples are collected.
+6. After training completes, click `Live Recognition`.
+
+The preview window will show the saved person's name over their face once the model recognizes them.
 
 ### 5. Retrain the recognition model manually
 
@@ -117,3 +152,4 @@ pytest
 - The project uses OpenCV's bundled `haarcascade_frontalface_default.xml`, so you do not need to download the model separately.
 - The project is pinned to OpenCV 4.x contrib builds because that line reliably ships both the Haar cascade data and the LBPH face recognizer used here.
 - Haar cascades and LBPH are lightweight and easy to run locally, though they are less accurate than modern deep learning face recognition systems.
+- The desktop UI uses Tkinter and Pillow for a local preview window.

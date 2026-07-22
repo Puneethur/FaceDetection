@@ -98,6 +98,18 @@ class FaceRecognitionStore:
         self.person_name_file(display_name).write_text(display_name, encoding="utf-8")
         return display_name, person_dir
 
+    def list_people(self) -> list[tuple[str, int]]:
+        self.dataset_dir.mkdir(parents=True, exist_ok=True)
+        people: list[tuple[str, int]] = []
+
+        for person_dir in sorted(path for path in self.dataset_dir.iterdir() if path.is_dir()):
+            sample_count = len(self.iter_sample_files(person_dir))
+            if sample_count == 0:
+                continue
+            people.append((self.read_display_name(person_dir), sample_count))
+
+        return people
+
     def preprocess_face(self, face_image) -> np.ndarray:
         if face_image is None or face_image.size == 0:
             raise ValueError("Face image is empty.")
@@ -296,4 +308,3 @@ class FaceRecognitionStore:
             )
 
         return annotated
-
