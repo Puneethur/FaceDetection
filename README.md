@@ -37,6 +37,82 @@ FaceDetection/
 `-- requirements.txt
 ```
 
+## Learning the Codebase
+
+If you are new to the project, start with the controller files first and then move into
+the detection and recognition logic.
+
+### Where execution starts
+
+- CLI entry point: `python -m face_detection`
+  - Starts in `face_detection/__main__.py`
+  - Calls `main()` in `face_detection/cli.py`
+- GUI entry point: `python -m face_detection.gui`
+  - Starts in `face_detection/gui.py`
+  - Calls `launch()`, which creates `FaceDetectionStudio()` and starts the Tkinter app loop
+- Windows GUI launcher: `launch_ui.bat`
+  - Runs `python -m face_detection.gui`
+
+### Recommended reading order
+
+1. `face_detection/cli.py`
+   - Best file to understand the overall flow
+   - `main()` parses arguments and decides which mode to run
+2. `face_detection/detector.py`
+   - Contains `FaceDetector`
+   - `detect()` finds faces in an image
+   - `annotate()` draws face boxes
+3. `face_detection/recognizer.py`
+   - Contains `FaceRecognitionStore`
+   - `capture_person_samples()` saves face samples from the webcam
+   - `train_model()` trains the LBPH face recognizer
+   - `recognize_faces()` predicts saved people from webcam frames
+4. `face_detection/gui.py`
+   - Connects buttons and webcam preview to the detector and recognizer
+   - Bigger than the other files, but easier after you understand the core logic
+
+### High-level flow
+
+#### CLI flow
+
+1. `face_detection/__main__.py` calls `cli.main()`
+2. `cli.main()` reads command-line arguments
+3. One of these functions runs:
+   - `run_image_mode()`
+   - `run_webcam_mode()`
+   - `run_register_mode()`
+   - `run_train_mode()`
+   - `run_recognition_webcam_mode()`
+4. Those functions use:
+   - `FaceDetector` for finding faces
+   - `FaceRecognitionStore` for saving samples, training, and recognition
+
+#### GUI flow
+
+1. `launch()` creates `FaceDetectionStudio`
+2. `FaceDetectionStudio.__init__()` builds the window and creates:
+   - `FaceDetector`
+   - `FaceRecognitionStore`
+3. `start_camera()` opens the webcam
+4. `_update_frame()` reads one frame at a time
+5. `_process_frame()` decides what to do based on the current mode:
+   - Detection mode: detect faces and draw boxes
+   - Training mode: save face samples and train the model
+   - Recognition mode: predict names and draw them on the frame
+
+### Best functions to debug first
+
+- `face_detection/cli.py -> main()`
+- `face_detection/detector.py -> detect()`
+- `face_detection/recognizer.py -> train_model()`
+- `face_detection/recognizer.py -> recognize_faces()`
+- `face_detection/gui.py -> start_camera()`
+- `face_detection/gui.py -> _update_frame()`
+
+### Simple mental model
+
+`entry point -> controller function -> detector/recognizer -> model/files -> output on screen`
+
 ## Setup
 
 ```bash

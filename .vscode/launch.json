@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FaceDetection GUI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "face_detection.gui",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "FaceDetection CLI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "face_detection",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "--webcam"
+      ]
+    }
+  ]
+}
